@@ -1,68 +1,68 @@
-def choose_landmarks(money:int, landmarks_data:list[str]) -> list[str]:
-    for n, el in enumerate(landmarks_data):
-        landmarks_data[n] += ';'+ str(n)
-    landmarks= sorted(landmarks_data, key=lambda m : m[0], reverse=True)
-    result = []
-    matrix = []
-    money_list=list(range(50, money+50, 50))
+from collections import  namedtuple
+
+
+Landmark = namedtuple("landmark", "interest cost name position")
+def choose_landmarks(money:int, landmarks_data:list[str]) -> str:
+    landmarks = transformation(landmarks_data)
+    bag = {}
+    for mn in range(50, money + 50, 50):
+        bag[mn] = []
     for landmark in landmarks:
-        matrix.append([])
-        data_landmark=landmark.split(";")
-        for mn in money_list:
-            if int(data_landmark[1]) <= mn:
-                if len(matrix) != 1:
-                    bug=line_bug(matrix, mn, data_landmark)
-                    bug_interest=interst_bug(bug)
-                    current_max_bug = matrix[-2][len(matrix[len(matrix)-1])]
-                    if current_max_bug:
-                        if interst_bug(current_max_bug) < bug_interest:
-                            matrix[-1].append(bug)
-                        else:
-                            matrix[-1].append(matrix[-2][len(matrix[len(matrix) - 1])])
-                    else:
-                        matrix[-1].append(bug)
+        for inner_bag in bag.keys():
+            if len(bag[inner_bag]) == 0:
+                if landmark.cost <= inner_bag:
+                    bag[inner_bag].append([landmark])
                 else:
-                    matrix[-1].append(line_bug(matrix, mn, data_landmark))
+                    bag[inner_bag].append([Landmark(0, 0, "", -1)])
             else:
-                if len(matrix) != 1:
-                    matrix[-1].append(matrix[-2][len(matrix[len(matrix) - 1])])
-                else:
-                    matrix[-1].append([])
-    result=matrix[-1][-1]
-    result = sorted(result, key=lambda m:m[-1])
-    result_str=""
-    for element in result:
-        result_str += element[-2] + ';'
-    result_str = result_str[:-1]
-    return result_str
+                cell = introduction_landmark(inner_bag, landmark, bag)
+                bag[inner_bag].append(cell)
+    return prepear_answer(bag[-1][-1])
 
-def line_bug(matrix, bug_size, landmark):
-    result = []
-    reserve=bug_size-int(landmark[1])
-    if reserve >=50:
-        bug_index = (reserve // 50) - 1
-        for num_string in range(len(matrix)-2, -1, -1):
-            if num_string == -1:
-                break
-            if len(matrix[num_string][bug_index]) <= 31:
-                additional_landmark = matrix[num_string][bug_index]
-                for elem in additional_landmark:
-                    result.append(elem)
-                break
-    result.append(landmark)
-    return result
+def transformation(data_landmarks:list) -> list:
+    list_of_landmark = []
+    for n, str_landmark in enumerate(data_landmarks):
+        list_str_landmark = str_landmark.split(";")
+        list_of_landmark.append(Landmark(int(list_str_landmark[0]), int(list_str_landmark[1]), list_str_landmark[2], n))
+    landmarks = sorted(list_of_landmark, key=lambda m: m.interest, reverse=True)
+    return landmarks
 
+def introduction_landmark(inner_bag:int, landmark, bag):
+    # cell = []
+    if landmark.cost < inner_bag:
+        #вмещается и остается место
+        rest = inner_bag - landmark.cost #ищет остаток
+        filling_bag = bag[rest][-1] #ищет сумку размером с этот остаток
+        if len(filling_bag) <= 31: #если в сумке размером с остаток меньше или ровно 31 элемент
+            filling_bag_interest = interest_bag(filling_bag) #считаем инетерес в сумке размером с остаток
+            if landmark.interest + filling_bag_interest <= bag[inner_bag-50].interest:
+                cell = bag[inner_bag][-1] #если предыдущая интереснее, то вписываем предыдущую
+            else:
+                cell = filling_bag.append(landmark) #если нынешняя интереснее всписываем ее
+    elif landmark.cost == inner_bag:
+        # вмещается и места не остается
+        if landmark.interest <= interest_bag(bag[inner_bag - 50][-1]):
+            cell = bag[inner_bag][-1]  # если предыдущая интереснее, то вписываем предыдущую
+        else:
+            cell = [landmark]  # если нынешняя интереснее всписываем ее
+    else:
+        cell = bag[inner_bag][-1]
+        #не вмещается
+    return cell
 
-def interst_bug(bug):
-    interest=0
-    for landmark in bug:
-        interest=interest+int(landmark[0])
+def interest_bag (landmarks):
+    interest = 0
+    for landmark in landmarks:
+        interest += landmark.interest
     return interest
-#if __name__=="main":
-    # money=int(input())
-    # count=int(input())
-    # lms = []
-    # for _ in range(count):
-    #     lms.append(input())
-    # print(choose_landmarks(money,
-    #                  lms))
+
+def prepear_answer (landmark:list)-> str:
+    """"преобразует список в строку ответа"""
+    return landmark
+
+choose_landmarks(3000,
+                            ["15;2100;Ermitazh",
+                            "10;1500;Zimnij dvorec",
+                            "10;1200;Isaakievskij sobor",
+                            "8;1200;Kazanskij sobor v Peterburge",
+                            "6;750;Krejser Avrora"])
