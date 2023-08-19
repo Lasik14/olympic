@@ -17,7 +17,7 @@ def choose_landmarks(money:int, landmarks_data:list[str]) -> str:
             else:
                 cell = introduction_landmark(inner_bag, landmark, bag)
                 bag[inner_bag].append(cell)
-    return prepear_answer(bag[-1][-1])
+    return prepear_answer(bag[money][-1])
 
 def transformation(data_landmarks:list) -> list:
     list_of_landmark = []
@@ -27,21 +27,22 @@ def transformation(data_landmarks:list) -> list:
     landmarks = sorted(list_of_landmark, key=lambda m: m.interest, reverse=True)
     return landmarks
 
-def introduction_landmark(inner_bag:int, landmark, bag):
+def introduction_landmark(inner_bag:int, landmark:Landmark, bag:dict):
     # cell = []
-    if landmark.cost < inner_bag:
+    if landmark.cost < inner_bag and len(bag[inner_bag - landmark.cost]) > 1:
         #вмещается и остается место
         rest = inner_bag - landmark.cost #ищет остаток
-        filling_bag = bag[rest][-1] #ищет сумку размером с этот остаток
+        filling_bag = bag[rest][-2] #ищет сумку размером с этот остаток
         if len(filling_bag) <= 31: #если в сумке размером с остаток меньше или ровно 31 элемент
             filling_bag_interest = interest_bag(filling_bag) #считаем инетерес в сумке размером с остаток
-            if landmark.interest + filling_bag_interest <= bag[inner_bag-50].interest:
+            if landmark.interest + filling_bag_interest <= interest_bag(bag[inner_bag][-1]):
                 cell = bag[inner_bag][-1] #если предыдущая интереснее, то вписываем предыдущую
             else:
-                cell = filling_bag.append(landmark) #если нынешняя интереснее всписываем ее
+                cell = filling_bag[:]
+                cell.append(landmark) #если нынешняя интереснее всписываем ее
     elif landmark.cost == inner_bag:
         # вмещается и места не остается
-        if landmark.interest <= interest_bag(bag[inner_bag - 50][-1]):
+        if landmark.interest <= interest_bag(bag[inner_bag][-1]):
             cell = bag[inner_bag][-1]  # если предыдущая интереснее, то вписываем предыдущую
         else:
             cell = [landmark]  # если нынешняя интереснее всписываем ее
@@ -56,13 +57,6 @@ def interest_bag (landmarks):
         interest += landmark.interest
     return interest
 
-def prepear_answer (landmark:list)-> str:
+def prepear_answer (landmarks:list)-> str:
     """"преобразует список в строку ответа"""
-    return landmark
-
-choose_landmarks(3000,
-                            ["15;2100;Ermitazh",
-                            "10;1500;Zimnij dvorec",
-                            "10;1200;Isaakievskij sobor",
-                            "8;1200;Kazanskij sobor v Peterburge",
-                            "6;750;Krejser Avrora"])
+    return ';'.join([lm.name for lm in sorted(landmarks, key=lambda m:m.position) if lm.name != ''])
